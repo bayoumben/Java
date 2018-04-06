@@ -1,4 +1,5 @@
 ---
 - hosts: awx
   roles:
-    - ansible-mysql
+    - role: geerlingguy.mysql
+      become: yes
