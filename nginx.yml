@@ -1,60 +1,20 @@
 ---
-- name: Set up nginx
-  hosts: awx
-  #user: vagrant
-  tasks:
-    - name: Install nginx
-      apt: pkg=nginx state=present update_cache=yes
+- name: check registered the repository of nginx-release
+  shell: rpm -qa | grep nginx-release
+  register: result
+  ignore_errors: True
+  always_run: yes
+  changed_when: no
+- name: add repository nginx-release (CentOS6/CentOS7)
+  yum: name="http://nginx.org/packages/centos/{{ansible_distribution_major_version}}/noarch/RPMS/nginx-release-centos-{{ansible_distribution_major_version}}-0.el{{ansible_distribution_major_version}}.ngx.noarch.rpm"
+  when: result|failed
 
-    - name: Set up nginx config directory
-      file: path=/etc/nginx/{{ item }}
-            state=directory
-      with_items:
-        - sites-available
-        - sites-enabled
+- name: disable the repository (pls set --enablerepo=nginx if you use it)
+  replace: dest=/etc/yum.repos.d/nginx.repo regexp="enabled *= *1" replace="enabled=0"
+  ignore_errors: True
 
-    - name: Generate the nginx configuration file
-      copy: src=files/nginx.conf
-            dest=/etc/nginx/nginx.conf
+- name: install nginx
+  yum: name=nginx state=present enablerepo=nginx
 
-    - name: Deactivate the default nginx site
-      file: path=/etc/nginx/sites-enabled/default
-            state=absent
-
-    - name: Generate the stub_status site config
-      copy: src=files/nginx.status.conf
-            dest=/etc/nginx/sites-available/status
-
-    - name: Activate the stub_status site
-      file: src=/etc/nginx/sites-available/status
-            dest=/etc/nginx/sites-enabled/status
-            state=link
-
-    - name: Add site for the app under development
-      when: app is defined
-      template: src=templates/nginx.site.conf.j2
-                dest=/etc/nginx/sites-available/site
-
-    - name: Activate the app
-      when: app is defined
-      file: src=/etc/nginx/sites-available/site
-            dest=/etc/nginx/sites-enabled/site
-            state=link
-
-    - name: Configure log rotation
-      copy: src=files/nginx.logrotate
-            dest=/etc/logrotate.d/nginx
-
-    - name: Copy nginx init script
-      sudo: yes
-      copy: src=files/nginx.upstart
-            dest=/etc/init/nginx.conf
-            mode=755
-
-    - name: Add ufw rule
-      sudo: yes
-      command: ufw allow 80,443/tcp
-      # Note: ufw isn't enabled at this point
-
-    - name: Start nginx
-      command: start nginx
+- name: Start Nginx
+  service: name=nginx enabled=yes state=started
