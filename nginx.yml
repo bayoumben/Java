@@ -1,7 +1,7 @@
 ---
 - name: Set up nginx
-  hosts: vagrant
-  user: vagrant
+  hosts: awx
+  #user: vagrant
   tasks:
     - name: Install nginx
       apt: pkg=nginx state=present update_cache=yes
