@@ -1,4 +1,6 @@
 ---
+hosts: awx
+tasks:
 - name: check registered the repository of nginx-release
   shell: rpm -qa | grep nginx-release
   register: result
