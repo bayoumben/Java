@@ -1,6 +1,6 @@
 ---
 # file: test/playbook_mariadb_minimal.yml
 - name: Install and configure MariaDB Server
-  hosts: vm01
+  hosts: awx
   roles:
-- role: joe-speedboat.mariadb
+   - role: ansible.mariadb
